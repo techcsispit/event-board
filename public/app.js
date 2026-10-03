@@ -101,7 +101,7 @@ function filterByTag(tag) {
   const query = tag.trim();
   const filtered = currentEvents.filter(event => {
     if (!Array.isArray(event.tags)) return false;
-    return event.tags.includes(query);
+    return event.tags.some(tag =>tag.toLowerCase().includes(query.toLowerCase()));
   });
 
   renderCards(filtered);
