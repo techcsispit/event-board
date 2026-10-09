@@ -7,7 +7,7 @@ function validateEvent(event) {
     return { valid: false, error: "Event must be an object" };
   }
 
-  if (typeof event.title !== "string" || event.title.length === 0) {
+  if (typeof event.title !== "string" || event.title.trim().length === 0) {
     return { valid: false, error: "Title is required" };
   }
 
