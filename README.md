@@ -18,7 +18,10 @@ npm test
 |---|---|
 | `GET /events` | All events |
 | `POST /events` | Creates an event. Body: `{"title", "date", "location", "description", "tags"}` |
-| `DELETE /events/{id}` | Deletes an event |
+| `PUT /events/{id}` | Edits an event (admin only). Body is the same as `POST /events` |
+| `DELETE /events/{id}` | Deletes an event (admin only) |
+
+`PUT` and `DELETE` need an admin token. Set the `ADMIN_TOKEN` environment variable before starting the server and send it as `Authorization: Bearer <token>`. If `ADMIN_TOKEN` isn't set, or the token doesn't match, they return `401`.
 
 ```
 curl -X POST localhost:3000/events -H 'Content-Type: application/json' \
@@ -29,7 +32,7 @@ curl -X POST localhost:3000/events -H 'Content-Type: application/json' \
 
 - Events are listed in date order, earliest first.
 - Title and location are required and can't be just spaces. The date must be a real date written `YYYY-MM-DD`. Anything else is a `400`.
-- Deleting an id that doesn't exist is a `404`.
+- Deleting an id that doesn't exist is a `404` (with a valid admin token; without one it is a `401`).
 - If the event can't be saved to disk, the API returns `500` and the event isn't added.
 - The tag filter ignores capital letters: `tech` finds events tagged `Tech`.
 - Titles, locations, descriptions and tags are shown as plain text. If one contains HTML, it's displayed, not run.
