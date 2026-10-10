@@ -26,14 +26,14 @@ function loadEvents() {
   }
 }
 
-function saveEvents() {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(events, null, 2), "utf-8");
-  } catch (err) {
-    console.error("Failed to save events:", err);
-  }
+// Save events to the JSON file
+function saveEvents(updatedEvents) {
+  fs.writeFileSync(
+    DATA_FILE,
+    JSON.stringify(updatedEvents, null, 2),
+    "utf-8"
+  );
 }
-
 loadEvents();
 
 // GET all events
@@ -54,13 +54,19 @@ function checkAdmin(req, res, next) {
 }
 
 // POST create a new event
+// POST create a new event
 app.post("/events", (req, res) => {
   const validation = validateEvent(req.body);
+
   if (!validation.valid) {
     return res.status(400).json({ error: validation.error });
   }
 
-  const nextId = events.length > 0 ? Math.max(...events.map(e => e.id || 0)) + 1 : 1;
+  const nextId =
+    events.length > 0
+      ? Math.max(...events.map(e => e.id || 0)) + 1
+      : 1;
+
   const newEvent = {
     id: nextId,
     title: req.body.title,
@@ -70,20 +76,42 @@ app.post("/events", (req, res) => {
     tags: Array.isArray(req.body.tags) ? req.body.tags : []
   };
 
-  events.push(newEvent);
-  saveEvents();
-  res.status(201).json(newEvent);
+  const updatedEvents = [...events, newEvent];
+
+  try {
+    // Save the updated list directly to disk
+    fs.writeFileSync(
+      DATA_FILE,
+      JSON.stringify(updatedEvents, null, 2),
+      "utf-8"
+    );
+
+    // Update memory only after saving succeeds
+    events = updatedEvents;
+
+    return res.status(201).json(newEvent);
+  } catch (err) {
+    console.error("Failed to save event:", err);
+
+    return res.status(500).json({
+      error: "Failed to save event"
+    });
+  }
 });
 
 // PUT edit an event by ID
+// PUT edit an event by ID
 app.put("/events/:id", checkAdmin, (req, res) => {
   const id = parseInt(req.params.id, 10);
+
   const eventIndex = events.findIndex(e => e.id === id);
+
   if (eventIndex === -1) {
     return res.status(404).json({ error: "Not found" });
   }
 
   const validation = validateEvent(req.body);
+
   if (!validation.valid) {
     return res.status(400).json({ error: validation.error });
   }
@@ -97,21 +125,56 @@ app.put("/events/:id", checkAdmin, (req, res) => {
     tags: Array.isArray(req.body.tags) ? req.body.tags : []
   };
 
-  events[eventIndex] = updatedEvent;
-  saveEvents();
-  res.status(200).json(updatedEvent);
+  // Prepare the updated list without modifying the original array
+  const updatedEvents = [...events];
+  updatedEvents[eventIndex] = updatedEvent;
+
+  try {
+    // Save to disk first
+    saveEvents(updatedEvents);
+
+    // Update memory only after saving succeeds
+    events = updatedEvents;
+
+    return res.status(200).json(updatedEvent);
+  } catch (err) {
+    console.error("Failed to save event update:", err);
+
+    return res.status(500).json({
+      error: "Failed to save event update"
+    });
+  }
 });
 
 // DELETE an event by ID
+// DELETE an event by ID
 app.delete("/events/:id", checkAdmin, (req, res) => {
   const id = parseInt(req.params.id, 10);
+
   const eventExists = events.some(e => e.id === id);
+
   if (!eventExists) {
     return res.status(404).json({ error: "Not found" });
   }
-  events = events.filter(e => e.id !== id);
-  saveEvents();
-  res.status(200).json({ ok: true });
+
+  // Prepare the list without the event, but preserve the original array
+  const updatedEvents = events.filter(e => e.id !== id);
+
+  try {
+    // Save to disk first
+    saveEvents(updatedEvents);
+
+    // Update memory only after saving succeeds
+    events = updatedEvents;
+
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+  console.error("Failed to save event deletion:", err.message);
+
+  return res.status(500).json({
+    error: "Could not save changes to disk"
+  });
+}
 });
 
 // POST verify admin token
