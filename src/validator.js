@@ -11,7 +11,7 @@ function validateEvent(event) {
     return { valid: false, error: "Title is required" };
   }
 
-  if (!event.date || isNaN(Date.parse(event.date))) {
+  if (typeof event.date !== "string" || isNaN(Date.parse(event.date))) {
     return { valid: false, error: "Valid date (YYYY-MM-DD) is required" };
   }
 
