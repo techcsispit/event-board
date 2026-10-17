@@ -92,19 +92,27 @@ async function fetchEvents() {
   }
 }
 
-function filterByTag(tag) {
-  if (!tag || tag.trim() === "") {
+function filterEvents(query) {
+  if (!query || query.trim() === "") {
     renderCards(currentEvents);
     return;
   }
 
-  const query = tag.trim();
+  const q = query.trim().toLowerCase();
   const filtered = currentEvents.filter(event => {
-    if (!Array.isArray(event.tags)) return false;
-    return event.tags.some(tag =>tag.toLowerCase().includes(query.toLowerCase()));
+    const matchTitle = typeof event.title === "string" && event.title.toLowerCase().includes(q);
+    const matchLocation = typeof event.location === "string" && event.location.toLowerCase().includes(q);
+    const matchDesc = typeof event.description === "string" && event.description.toLowerCase().includes(q);
+    const matchTags = Array.isArray(event.tags) && event.tags.some(tag => typeof tag === "string" && tag.toLowerCase().includes(q));
+
+    return Boolean(matchTitle || matchLocation || matchDesc || matchTags);
   });
 
   renderCards(filtered);
+}
+
+function filterByTag(query) {
+  return filterEvents(query);
 }
 
 function escapeHtml(str) {
@@ -127,7 +135,7 @@ function renderCards(eventsToRender) {
 
   eventsGrid.innerHTML = eventsToRender.map(event => {
     const tagsHtml = (event.tags || [])
-      .map(tag => `<span class="tag-badge">#${escapeHtml(tag)}</span>`)
+      .map(tag => `<span class="tag-badge" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</span>`)
       .join("");
 
     const safeId = Number(event.id);
@@ -244,12 +252,22 @@ async function handleCreateEvent(e) {
 }
 
 tagFilter.addEventListener("input", (e) => {
-  filterByTag(e.target.value);
+  filterEvents(e.target.value);
 });
 
 clearFilterBtn.addEventListener("click", () => {
   tagFilter.value = "";
-  renderCards(currentEvents);
+  filterEvents("");
+});
+
+eventsGrid.addEventListener("click", (e) => {
+  const target = e.target;
+  if (!target) return;
+  const badge = target.closest ? target.closest(".tag-badge") : (target.classList && target.classList.contains("tag-badge") ? target : null);
+  if (!badge) return;
+  const tag = (badge.getAttribute && badge.getAttribute("data-tag")) || (badge.dataset && badge.dataset.tag) || (badge.textContent || "").replace(/^#/, "").trim();
+  tagFilter.value = tag;
+  filterEvents(tag);
 });
 
 toggleFormBtn.addEventListener("click", () => {

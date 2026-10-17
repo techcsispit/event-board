@@ -34,7 +34,7 @@ curl -X POST localhost:3000/events -H 'Content-Type: application/json' \
 - Title and location are required and can't be just spaces. The date must be a real date written `YYYY-MM-DD`. Anything else is a `400`.
 - Deleting an id that doesn't exist is a `404` (with a valid admin token; without one it is a `401`).
 - If the event can't be saved to disk, the API returns `500` and the event isn't added.
-- The tag filter ignores capital letters: `tech` finds events tagged `Tech`.
+- The search bar matches event title, location, description, and tags case-insensitively (e.g. searching `tech` finds events tagged `Tech` or with "tech" in the title). Clicking any tag badge on an event card filters the board by that tag.
 - Titles, locations, descriptions and tags are shown as plain text. If one contains HTML, it's displayed, not run.
 
 ## Code

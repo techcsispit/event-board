@@ -310,6 +310,13 @@ textarea:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   display: inline-block;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tag-badge:hover {
+  background-color: #374151;
+  color: #f3f4f6;
 }
 
 .card-actions {
