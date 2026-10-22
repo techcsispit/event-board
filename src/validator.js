@@ -35,6 +35,10 @@ function validateEvent(event) {
     return { valid: false, error: "Location is required" };
   }
 
+  if (event.description !== undefined && typeof event.description !== "string") {
+    return { valid: false, error: "Description must be a string" };
+  }
+
   if (Array.isArray(event.tags) && !event.tags.every(tag => typeof tag === "string")) {
     return { valid: false, error: "Tags must be strings" };
   }
