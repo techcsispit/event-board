@@ -102,4 +102,29 @@ describe("Event Validator", () => {
       assert.strictEqual(result.error, "Valid date (YYYY-MM-DD) is required");
     }
   });
+
+  test("rejects non-string description types", () => {
+    for (const badDesc of [12345, true, false, ["not", "string"], { text: "description" }]) {
+      const result = validateEvent({
+        title: "Test Event",
+        date: "2026-10-20",
+        location: "Mumbai",
+        description: badDesc
+      });
+      assert.strictEqual(result.valid, false);
+      assert.strictEqual(result.error, "Description must be a string");
+    }
+  });
+
+  test("accepts missing, empty, or string descriptions", () => {
+    for (const goodDesc of [undefined, "", "A valid event description"]) {
+      const result = validateEvent({
+        title: "Test Event",
+        date: "2026-10-20",
+        location: "Mumbai",
+        description: goodDesc
+      });
+      assert.strictEqual(result.valid, true);
+    }
+  });
 });
